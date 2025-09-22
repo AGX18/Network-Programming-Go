@@ -1,0 +1,34 @@
+# Binaries for programs
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*_test
+
+# Go module cache
+.go/
+vendor/
+
+# Dependencies
+# Godep
+Godeps/_workspace/
+
+# Go build cache
+.cache/go-build/
+go.work.sum
+
+# IDE specific files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
