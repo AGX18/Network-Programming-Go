@@ -1,0 +1,1 @@
+a small HTTP server which serves back the request headers as JSON. Since HTTP/1.1 uses TCP, it will require a TCP socket and to use the listen and accept system calls

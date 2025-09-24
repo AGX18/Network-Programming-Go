@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"syscall"
 )
 
@@ -41,22 +43,38 @@ func main()  {
 		// and handle partial reads/writes.
 		// For simplicity, we'll just read once and echo it back.
 
-		for {
-			data := make([]byte, 1024)
-			n, err := syscall.Read(nfd, data)
-			if err != nil || n == 0 {
-				fmt.Fprintf(os.Stderr, "read error: %v\n", err)
-				syscall.Close(nfd)
-				break
-			}
-			fmt.Printf("Received %d bytes: %s\n", n, string(data[:n]))
-			syscall.Write(nfd, data[:n])
-			
-			fmt.Printf("Handled connection from %v\n", sa)
-
+		data := make([]byte, 4096)
+		n, err := syscall.Read(nfd, data)
+		if err != nil || n == 0 {
+			fmt.Fprintf(os.Stderr, "read error: %v\n", err)
+			syscall.Close(nfd)
+			continue
 		}
-		go func() {
-			defer syscall.Close(nfd)
-		}()
+		req := string(data[:n])
+		HeadersAndBody := strings.Split(req, "\r\n\r\n")
+		Headers := strings.Split(HeadersAndBody[0], "\r\n")
+		body := HeadersAndBody[1]
+		responseBody := make(map[string]string)
+		for hline := range Headers {
+			fmt.Printf("Header Line %d: %s\n", hline, Headers[hline])
+			parts := strings.SplitN(Headers[hline], ": ", 2)
+			if len(parts) == 2 {
+				responseBody[parts[0]] = parts[1]
+			}
+		}
+		fmt.Printf("Body: %s\n", body)
+		fmt.Printf("Received %d bytes: %s\n", n, string(data[:n]))
+		
+		fmt.Printf("Handled connection from %v\n", sa)
+
+
+		jsonBody, _ := json.Marshal(responseBody)
+		response := "HTTP/1.1 200 OK\r\n\r\n" 
+		syscall.Write(nfd, []byte(response))
+		syscall.Write(nfd, jsonBody)
+		syscall.Write(nfd, []byte("\r\n"))
+		// Close the accepted connection
+
+		syscall.Close(nfd)
 	}
 }
